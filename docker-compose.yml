@@ -1,0 +1,23 @@
+version: '2.2'
+services:
+    mongo:
+        image: mongo
+        container_name: mongodb
+        restart: always
+        environment:
+            - MONGO_INITDB_DATABASE=facebook
+    fastapi:
+        build: ./docker/fastApi
+        restart: always
+        depends_on:
+            - mongo
+        ports:
+            - "80:80"
+        command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+######################################################
+# NETWORK
+######################################################
+
+networks:
+  default:
+    name: network-facebook-scraper
