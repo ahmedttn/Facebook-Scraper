@@ -171,7 +171,7 @@ class Utilities:
 
     @staticmethod
     def __click_see_more_comment(driver, post, selector):
-        """expects driver's instance and selenium element, click on "see more" link to open hidden content"""
+        """expects driver's instance and selenium element, click on "see more comment" link to open hidden comment"""
         try:
             elements = post.find_elements(
                                 By.CSS_SELECTOR, selector)
