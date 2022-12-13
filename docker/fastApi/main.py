@@ -20,6 +20,6 @@ async def get_page_name(page_name: str):
     headless = True
     meta_ai = Facebook_scraper(page_name, 20, browser, proxy="IP:PORT", timeout=timeout, headless=headless)
     json_data = meta_ai.scrap_list_of_json()
-    meta_ai.__insert_data(json_data)
+    meta_ai.insert_data(json_data)
  
     return True

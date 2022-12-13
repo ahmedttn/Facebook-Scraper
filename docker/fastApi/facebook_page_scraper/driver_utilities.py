@@ -77,21 +77,18 @@ class Utilities:
                 "Error at close_modern_layout_signup_modal: {}".format(ex))
 
     @staticmethod
-    def __scroll_down(driver, layout):
+    def __scroll_down(driver):
         """expects driver's instance as a argument, and it scrolls down page to the most bottom till the height"""
         try:
-            if layout == "old":
-                driver.execute_script(
-                    "window.scrollTo(0, document.body.scrollHeight);")
-            elif layout == "new":
-                body = driver.find_element(By.CSS_SELECTOR, "body")
-                for _ in range(randint(1, 3)):
-                    body.send_keys(Keys.PAGE_UP)
-                time.sleep(randint(5, 6))
-                for _ in range(randint(5, 8)):
-                    body.send_keys(Keys.PAGE_DOWN)
-                #driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                # Utilities.__close_modern_layout_signup_modal(driver)
+
+            body = driver.find_element(By.CSS_SELECTOR, "body")
+            for _ in range(randint(1, 3)):
+                body.send_keys(Keys.PAGE_UP)
+            time.sleep(randint(2, 4))
+            for _ in range(randint(5, 8)):
+                body.send_keys(Keys.PAGE_DOWN)
+            #driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            # Utilities.__close_modern_layout_signup_modal(driver)
         except Exception as ex:
             # if any error occured than close the driver and exit
             Utilities.__close_driver(driver)
@@ -118,20 +115,12 @@ class Utilities:
             logger.exception("Error at close_popup method : {}".format(ex))
 
     @staticmethod
-    def __wait_for_element_to_appear(driver, layout):
+    def __wait_for_element_to_appear(driver):
         """expects driver's instance, wait for posts to show.
         post's CSS class name is userContentWrapper
         """
         try:
-            if layout == "old":
-                # wait for page to load so posts are visible
-                body = driver.find_element(By.CSS_SELECTOR, "body")
-                for _ in range(randint(3, 5)):
-                    body.send_keys(Keys.PAGE_DOWN)
-                WebDriverWait(driver, 30).until(EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, '.userContentWrapper')))
-            elif layout == "new":
-                WebDriverWait(driver, 30).until(
+            WebDriverWait(driver, 30).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "[aria-posinset]")))
 
         except WebDriverException:
@@ -179,7 +168,7 @@ class Utilities:
             for element in elements:
                 # element.click()
                 driver.execute_script("arguments[0].click();", element)
-            time.sleep(randint(5, 6))
+            time.sleep(randint(2, 4))
 
         except NoSuchElementException:
             # if it doesn't exists than no need to raise any error
