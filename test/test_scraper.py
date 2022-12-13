@@ -17,9 +17,6 @@ def test_scraper(json_exemple):
     headless = True
     meta_ai = Facebook_scraper('OfficialPage.Bestfriend', 1, browser, proxy="IP:PORT", timeout=600, headless=headless)
     json_data = meta_ai.scrap_list_of_json()[0]
-    print('+++++++++++++++++')
-    print(json_data)
-    print('+++++++++++++++++')
     assert json_data['id_post'] == json_exemple['id_post']
     assert json_data['name'] == json_exemple['name']
     assert json_data['shares'] == json_exemple['shares']

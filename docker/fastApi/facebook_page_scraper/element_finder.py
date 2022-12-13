@@ -54,25 +54,16 @@ class Finder():
         return status
 
     @staticmethod
-    def __find_status(post, layout):
+    def __find_status(post):
         """finds URL of the post, then extracts link from that URL and returns it"""
         try:
             link = None
             status_link = None
-            if layout == "old":
-                # aim is to find element that looks like <a href="URL" class="_5pcq"></a>
-                # after finding that element, get it's href value and pass it to different method that extracts post_id from that href
-                status_link = post.find_element(
-                    By.CLASS_NAME, "_5pcq").get_attribute("href")
-                # extract out post id from post's url
-                status = Scraping_utilities._Scraping_utilities__extract_id_from_link(
-                    status_link)
-            elif layout == "new":
-                #links = post.find_elements(By.CSS_SELECTOR,"a[role='link']")
-                link = post.find_element(
+            #links = post.find_elements(By.CSS_SELECTOR,"a[role='link']")
+            link = post.find_element(
                     By.CSS_SELECTOR, 'span > a[aria-label][role="link"]')
-                status_link = link.get_attribute('href')
-                status = Scraping_utilities._Scraping_utilities__extract_id_from_link(
+            status_link = link.get_attribute('href')
+            status = Scraping_utilities._Scraping_utilities__extract_id_from_link(
                     status_link)
         except NoSuchElementException:
             # if element is not found
@@ -85,24 +76,18 @@ class Finder():
         return (status, status_link, link)
 
     @staticmethod
-    def __find_share(post, layout):
+    def __find_share(post):
         """finds shares count of the facebook post using selenium's webdriver's method"""
         try:
-            if layout == "old":
-                # aim is to find element that have datatest-id attribute as UFI2SharesCount/root
-                shares = post.find_element(
-                    By.CSS_SELECTOR, "._355t._4vn2").get_attribute('textContent')
-                shares = Scraping_utilities._Scraping_utilities__extract_numbers(
-                    shares)
-            elif layout == "new":
-                elements = post.find_elements(
+
+            elements = post.find_elements(
                     By.CSS_SELECTOR, 'div[role="button"] > span')
-                shares = "0"
-                for element in elements:
-                    text = element.text
-                    if "share" in text:
-                        shares = re.findall("\d+", text)[0]
-                        break
+            shares = "0"
+            for element in elements:
+                text = element.text
+                if "share" in text:
+                    shares = re.findall("\d+", text)[0]
+                    break
             return shares
         except NoSuchElementException:
             # if element is not present that means there wasn't any shares
@@ -183,52 +168,26 @@ class Finder():
             return False
 
     @staticmethod
-    def __find_content(post, driver, layout):
+    def __find_content(post, driver):
         """finds content of the facebook post using selenium's webdriver's method and returns string containing text of the posts"""
         try:
-            if layout == "old":
-                post_content = post.find_element(By.CLASS_NAME, 'userContent')
-                # if 'See more' or 'Continue reading' is present in post
-                if Finder._Finder__element_exists(post_content, "span.text_exposed_link > a"):
-                    element = post_content.find_element(
-                        By.CSS_SELECTOR, "span.text_exposed_link > a")  # grab that element
-                    # if element have already the onclick function, that means it is expandable paragraph
-                    if element.get_attribute("onclick"):
-                        # click 'see more' button to get hidden text as well
-                        Utilities._Utilities__click_see_more(
-                            driver, post_content)
-                        content = Scraping_utilities._Scraping_utilities__extract_content(
-                            post_content)  # extract content out of it
-                    # if element have attribute of target="_blank"
-                    elif element.get_attribute("target"):
-                        # if it does not have onclick() method, it means we'll to extract passage by request
-                        # if content have attribute target="_blank" it indicates that text will open in new tab,
-                        # so make a seperate request and get that text
-                        content = Finder._Finder__fetch_post_passage(
-                            element.get_attribute("href"))
-                    else:
-                        content = post_content.get_attribute("textContent")
-                else:
-                    # if it does not have see more, just get the text out of it
-                    content = post_content.get_attribute("textContent")
-            elif layout == "new":
-                post_content = post.find_element(
+            post_content = post.find_element(
                     By.CSS_SELECTOR, '[data-ad-preview="message"]')
-                # if "See More" button exists
-                if Finder._Finder__element_exists(post_content, 'div[dir="auto"] > div[role]'):
-                    element = post_content.find_element(
+            # if "See More" button exists
+            if Finder._Finder__element_exists(post_content, 'div[dir="auto"] > div[role]'):
+                element = post_content.find_element(
                         By.CSS_SELECTOR, 'div[dir="auto"] > div[role]')  # grab that element
-                    if element.get_attribute("target"):
-                        content = Finder._Finder__fetch_post_passage(
+                if element.get_attribute("target"):
+                    content = Finder._Finder__fetch_post_passage(
                             element.get_attribute("href"))
-                    else:
-                        Utilities._Utilities__click_see_more(
-                            driver, post_content, 'div[dir="auto"] > div[role]')
-                        content = post_content.get_attribute(
-                            "textContent")  # extract content out of it
                 else:
+                    Utilities._Utilities__click_see_more(
+                            driver, post_content, 'div[dir="auto"] > div[role]')
+                    content = post_content.get_attribute(
+                            "textContent")  # extract content out of it
+            else:
                     # if it does not have see more, just get the text out of it
-                    content = post_content.get_attribute("textContent")
+                content = post_content.get_attribute("textContent")
 
         except NoSuchElementException:
             # if [data-testid="post_message"] is not found, it means that post did not had any text,either it is image or video
@@ -239,20 +198,16 @@ class Finder():
         return content
 
     @staticmethod
-    def __find_posted_time(post, layout, link_element):
+    def __find_posted_time(post, link_element):
         """finds posted time of the facebook post using selenium's webdriver's method"""
         try:
             # extract element that looks like <abbr class='_5ptz' data-utime="some unix timestamp"> </abbr>
             #posted_time = post.find_element_by_css_selector("abbr._5ptz").get_attribute("data-utime")
-            if layout == "old":
-                posted_time = post.find_element(
-                    By.TAG_NAME, "abbr").get_attribute('data-utime')
-                return datetime.datetime.fromtimestamp(float(posted_time)).isoformat()
-            elif layout == "new":
-                aria_label_value = link_element.get_attribute("aria-label")
-                timestamp = parse(aria_label_value).isoformat() if len(
+
+            aria_label_value = link_element.get_attribute("aria-label")
+            timestamp = parse(aria_label_value).isoformat() if len(
                     aria_label_value) > 5 else Scraping_utilities._Scraping_utilities__convert_to_iso(aria_label_value)
-                return timestamp
+            return timestamp
         except dateutil.parser._parser.ParserError:
             timestamp = Scraping_utilities._Scraping_utilities__convert_to_iso(
                 aria_label_value)
@@ -284,16 +239,11 @@ class Finder():
         return srcs
 
     @staticmethod
-    def __find_image_url(post, layout):
+    def __find_image_url(post):
         """finds all image of the facebook post using selenium's webdriver's method"""
         try:
-            if layout == "old":
-                # find all img tag that looks like <img class="scaledImageFitWidth img" src=""> div > img[referrerpolicy]
-                images = post.find_elements(
-                    By.CSS_SELECTOR, "img.scaledImageFitWidth.img")
-                # extract src attribute from all the img tag,store it in list
-            elif layout == "new":
-                images = post.find_elements(
+
+            images = post.find_elements(
                     By.CSS_SELECTOR, "div > img[referrerpolicy]")
             sources = [image.get_attribute("src") for image in images] if len(
                 images) > 0 else []
@@ -307,15 +257,10 @@ class Finder():
         return sources
 
     @staticmethod
-    def __find_all_posts(driver, layout):
+    def __find_all_posts(driver):
         """finds all posts of the facebook page using selenium's webdriver's method"""
         try:
-            # find all posts that looks like <div class="userContentWrapper"> </div>
-            if layout == "old":
-                all_posts = driver.find_elements(
-                    By.CSS_SELECTOR, "div.userContentWrapper")
-            elif layout == "new":
-                all_posts = driver.find_elements(
+            all_posts = driver.find_elements(
                     By.CSS_SELECTOR, 'div[class="x1yztbdb x1n2onr6 xh8yej3 x1ja2u2z"]')
             return all_posts
         except NoSuchElementException:
@@ -330,39 +275,20 @@ class Finder():
             sys.exit(1)
 
     @staticmethod
-    def __find_name(driver, layout):
+    def __find_name(driver):
         """finds name of the facebook page using selenium's webdriver's method"""
         try:
-            if layout == "old":
-                name = driver.find_element(
-                    By.CSS_SELECTOR, 'a._64-f').get_attribute('textContent')
-            elif layout == "new":
-                name = driver.find_element(
+            name = driver.find_element(
                     By.TAG_NAME, "strong").get_attribute("textContent")
             return name
         except Exception as ex:
             logger.exception("Error at __find_name method : {}".format(ex))
 
     @staticmethod
-    def __detect_ui(driver):
+    def __find_reaction(reactions_all):
         try:
-            driver.find_element(By.ID, "pagelet_bluebar")
-            return "old"
-        except NoSuchElementException:
-            return "new"
-        except Exception as ex:
-            logger.exception("Error art __detect_ui: {}".format(ex))
-            Utilities.__close_driver(driver)
-            sys.exit(1)
 
-    @staticmethod
-    def __find_reaction(layout, reactions_all):
-        try:
-            if layout == "old":
-                return reactions_all.find_elements(By.TAG_NAME,
-                                                   "a")
-            elif layout == "new":
-                return reactions_all.find_elements(By.TAG_NAME,
+            return reactions_all.find_elements(By.TAG_NAME,
                                                    "div")
 
         except Exception as ex:

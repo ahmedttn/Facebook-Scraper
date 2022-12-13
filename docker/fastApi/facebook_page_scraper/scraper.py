@@ -24,7 +24,6 @@ class Facebook_scraper:
         self.browser = browser
         self.__driver = ''
         self.proxy = proxy
-        self.__layout = ''
         self.timeout = timeout
         self.headless = headless
         self.browser_profile = browser_profile
@@ -36,15 +35,10 @@ class Facebook_scraper:
         self.__driver = Initializer(
             self.browser, self.proxy, self.headless, self.browser_profile).init()
 
-    def __handle_popup(self, layout):
+    def __handle_popup(self):
         # while scrolling, wait for login popup to show, it can be skipped by clicking "Not Now" button
         try:
-            if layout == "old":
-                # if during scrolling any of error or signup popup shows
-                Utilities._Utilities__close_error_popup(self.__driver)
-                Utilities._Utilities__close_popup(self.__driver)
-            elif layout == "new":
-                Utilities._Utilities__close_modern_layout_signup_modal(
+            Utilities._Utilities__close_modern_layout_signup_modal(
                     self.__driver)
         except Exception as ex:
             logger.exception("Error at handle_popup : {}".format(ex))
@@ -58,22 +52,21 @@ class Facebook_scraper:
         starting_time = time.time()
         # navigate to URL
         self.__driver.get(self.URL)
-        self.__layout = Finder._Finder__detect_ui(self.__driver)
         # sometimes we get popup that says "your request couldn't be processed", however
         # posts are loading in background if popup is closed, so call this method in case if it pops up.
         Utilities._Utilities__close_error_popup(self.__driver)
         # wait for post to load
         Utilities._Utilities__wait_for_element_to_appear(
-            self.__driver, self.__layout)
+            self.__driver)
         # scroll down to bottom most
-        Utilities._Utilities__scroll_down(self.__driver, self.__layout)
-        self.__handle_popup(self.__layout)
+        Utilities._Utilities__scroll_down(self.__driver)
+        self.__handle_popup()
 
         name = Finder._Finder__find_name(
-            self.__driver, self.__layout)  # find name element
+            self.__driver) 
 
         while len(self.__data_dict) <= self.posts_count:
-            self.__handle_popup(self.__layout)
+            self.__handle_popup()
             self.__find_elements(name)
             current_time = time.time()
             if self.__check_timeout(starting_time, current_time) is True:
@@ -81,7 +74,7 @@ class Facebook_scraper:
                 logger.info('Timeout...')
                 break
             Utilities._Utilities__scroll_down(
-                self.__driver, self.__layout)  # scroll down
+                self.__driver)  # scroll down
         # close the browser window after job is done.
         Utilities._Utilities__close_driver(self.__driver)
         # dict trimming, might happen that we find more posts than it was asked, so just trim it
@@ -107,7 +100,7 @@ class Facebook_scraper:
     def __find_elements(self, name):
         """find elements of posts and add them to data_dict"""
         all_posts = Finder._Finder__find_all_posts(
-            self.__driver, self.__layout)  # find all posts
+            self.__driver)  # find all posts
         all_posts = self.__remove_duplicates(
             all_posts)  # remove duplicates from the list
         # iterate over all the posts and find details from the same
@@ -115,11 +108,11 @@ class Facebook_scraper:
             try:
                 # find post ID from post
                 status, post_url, link_element = Finder._Finder__find_status(
-                    post, self.__layout)
+                    post)
                 if post_url is None:
                     continue
                 # find share from the post
-                shares = Finder._Finder__find_share(post, self.__layout)
+                shares = Finder._Finder__find_share(post)
                 # converting shares to number
                 # e.g if 5k than it should be 5000
                 shares = int(
@@ -127,7 +120,7 @@ class Facebook_scraper:
                 # find all reactions
                 reactions_all = Finder._Finder__find_reactions(post)
                 # find all anchor tags in reactions_all list
-                all_hrefs_in_react = Finder._Finder__find_reaction(self.__layout, reactions_all,) if type(
+                all_hrefs_in_react = Finder._Finder__find_reaction(reactions_all) if type(
                     reactions_all) != str else ""
                 # if hrefs were found
                 # all_hrefs contains elements like
@@ -192,14 +185,14 @@ class Facebook_scraper:
                 comments = Finder._Finder__find_comments(post, self.__driver)
 
                 post_content = Finder._Finder__find_content(
-                    post, self.__driver, self.__layout)
+                    post, self.__driver)
                 # extract time
                 posted_time = Finder._Finder__find_posted_time(
-                    post, self.__layout, link_element)
+                    post, link_element)
 
                 video = Finder._Finder__find_video_url(post)
 
-                image = Finder._Finder__find_image_url(post, self.__layout)
+                image = Finder._Finder__find_image_url(post)
 
                 #post_url = "https://www.facebook.com/{}/posts/{}".format(self.page_name,status)
 
@@ -220,7 +213,7 @@ class Facebook_scraper:
                 logger.exception(
                     "Error at find_elements method : {}".format(ex))
 
-    def __insert_data(self, json_data):
+    def insert_data(self, json_data):
         """insert data in database"""
         client = pymongo.MongoClient("mongodb://mongodb:27017/")
         db = client["facebookdb"]
