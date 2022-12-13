@@ -40,7 +40,7 @@ class Initializer:
             logger.info("Loading Profile from {}".format(self.profile))
             browser_option.add_argument("-profile")
             browser_option.add_argument(self.profile)
-        browser_option.add_argument('--headless')
+        # browser_option.add_argument('--headless')
         browser_option.add_argument('--no-sandbox')
         browser_option.add_argument("--disable-dev-shm-usage")
         browser_option.add_argument('--ignore-certificate-errors')

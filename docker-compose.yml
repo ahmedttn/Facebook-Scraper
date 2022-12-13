@@ -8,6 +8,7 @@ services:
             - MONGO_INITDB_DATABASE=facebook
     fastapi:
         build: ./docker/fastApi
+        container_name: facebook_scraper_fastapi
         restart: always
         depends_on:
             - mongo
